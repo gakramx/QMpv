@@ -22,6 +22,7 @@ class QMpv : public QQuickFramebufferObject
     Q_PROPERTY(qreal duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(bool paused READ paused NOTIFY pausedChanged)
     Q_PROPERTY(bool stopped READ stopped NOTIFY stoppedChanged)
+    Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
 
     mpv_handle *mpv;
     mpv_render_context *mpv_gl;
@@ -37,6 +38,7 @@ public:
 
     qreal position();
     qreal duration();
+    QString source();
     bool paused();
     bool stopped();
 
@@ -49,6 +51,7 @@ public Q_SLOTS:
     void command(const QVariant& params);
     void setOption(const QString &name, const QVariant &value);
     void setProperty(const QString &name, const QVariant &value);
+    void setSource(const QString &file);
     QVariant getProperty(const QString& name);
 
 Q_SIGNALS:
@@ -57,6 +60,7 @@ Q_SIGNALS:
     void pausedChanged();
     void onUpdate();
     void stoppedChanged();
+    void sourceChanged();
 
 private Q_SLOTS:
     void onMpvEvents();
@@ -67,5 +71,6 @@ private:
     qreal m_position = 0;
     qreal m_duration = 0;
     bool m_stopped = true;
+    QString m_source;
 };
 #endif // QMPV_H
