@@ -288,35 +288,6 @@ void QMpv::onMpvEvents() {
         }
     }
 }
-QString QMpv::converFile(const QString &filePath) {
-    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    QString folder = "Video";
-    QString customPath = cacheLocation + "/" + folder+ "/";
-
-    // Delete all files and folders within the customPath
-    QDir dir(customPath);
-    dir.removeRecursively();
-    QDir().mkpath(customPath);
-
-    QUrl url(filePath);
-    QString localName = url.isLocalFile() ? url.toLocalFile() : filePath;
-    qDebug() << "FILES: " << localName;
-
-    // Get the file name from the local path
-    QString fileName = QFileInfo(localName).fileName();
-
-    // Create the destination file path in the custom directory
-    QString destinationPath = customPath + fileName;
-
-    // Copy the file to the custom directory
-    if (QFile::copy(localName, destinationPath)) {
-        qDebug() << "File copied to custom path:" << destinationPath;
-    } else {
-        qDebug() << "Failed to copy file!";
-    }
-    qDebug() << "NEW FILES: " << destinationPath;
-    return destinationPath;
-}
 
 bool QMpv::stopped() { return m_stopped; }
 

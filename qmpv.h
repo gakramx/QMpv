@@ -46,7 +46,6 @@ public Q_SLOTS:
     void stop();
     void setPosition(double value);
     void seek(qreal offset);
-    QString converFile(const QString& filePath);
     void command(const QVariant& params);
     void setOption(const QString &name, const QVariant &value);
     void setProperty(const QString &name, const QVariant &value);
