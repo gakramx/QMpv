@@ -289,7 +289,7 @@ void QMpv::onMpvEvents() {
     }
 }
 
-QString QMpv::setSource(const QString &file){
+void QMpv::setSource(const QString &file){
     m_source=file;
     // after laodfile it's directly play the media file !
     command(QStringList() << "loadfile" << m_source);
