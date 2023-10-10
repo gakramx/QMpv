@@ -134,6 +134,7 @@ QMpv::QMpv(QQuickItem * parent)
     mpv_observe_property(mpv, 0, "duration", MPV_FORMAT_DOUBLE);
     mpv_observe_property(mpv, 0, "time-pos", MPV_FORMAT_DOUBLE);
     mpv_observe_property(mpv, 0, "pause", MPV_FORMAT_FLAG);
+    mpv_observe_property(mpv, 0, "path", MPV_FORMAT_STRING);
 
     mpv_set_wakeup_callback(mpv, on_mpv_events, this);
 
@@ -238,6 +239,16 @@ QVariant QMpv::getProperty(const QString &name)
     return mpv::qt::get_property(mpv, name);
 }
 
+void QMpv::setSource(const QString &file){
+    // after laodfile it's directly play the media file !
+    command(QStringList() << "loadfile" << file);
+    Q_EMIT sourceChanged();
+}
+
+QString QMpv::source(){
+    return m_source;
+}
+
 QQuickFramebufferObject::Renderer *QMpv::createRenderer() const
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -280,6 +291,12 @@ void QMpv::onMpvEvents() {
                     m_paused = *(bool *)prop->data;
                     Q_EMIT pausedChanged();
                 }
+            }else if (strcmp(prop->name, "path") == 0) {
+                if (prop->format == MPV_FORMAT_STRING) {
+                    QString filePath = QString::fromUtf8(*(char **)prop->data);
+                    m_source = filePath;
+                    Q_EMIT sourceChanged();
+                }
             }
             break;
         }
@@ -287,17 +304,6 @@ void QMpv::onMpvEvents() {
             // Ignore uninteresting or unknown events.
         }
     }
-}
-
-void QMpv::setSource(const QString &file){
-    m_source=file;
-    // after laodfile it's directly play the media file !
-    command(QStringList() << "loadfile" << m_source);
-    Q_EMIT sourceChanged();
-}
-
-QString QMpv::source(){
-    return m_source;
 }
 
 
