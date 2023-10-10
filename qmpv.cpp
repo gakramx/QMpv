@@ -249,6 +249,18 @@ QString QMpv::source(){
     return m_source;
 }
 
+void QMpv::setplaybackRate(qreal rate){
+    if (rate == playbackRate()) {
+        return;
+    }
+    setProperty("speed", rate);
+    Q_EMIT playbackRateChanged();
+}
+
+qreal QMpv::playbackRate(){
+    return m_playbackrate;
+}
+
 QQuickFramebufferObject::Renderer *QMpv::createRenderer() const
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -296,6 +308,12 @@ void QMpv::onMpvEvents() {
                     QString filePath = QString::fromUtf8(*(char **)prop->data);
                     m_source = filePath;
                     Q_EMIT sourceChanged();
+                }
+            }else if (strcmp(prop->name, "speed") == 0) {
+                // Handle speed property change
+                if (prop->format == MPV_FORMAT_DOUBLE) {
+                    double rate = *(double *)prop->data;
+                    m_playbackrate = rate;
                 }
             }
             break;
