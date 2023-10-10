@@ -135,7 +135,8 @@ QMpv::QMpv(QQuickItem * parent)
     mpv_observe_property(mpv, 0, "time-pos", MPV_FORMAT_DOUBLE);
     mpv_observe_property(mpv, 0, "pause", MPV_FORMAT_FLAG);
     mpv_observe_property(mpv, 0, "path", MPV_FORMAT_STRING);
-
+    mpv_observe_property(mpv, 0, "speed", MPV_FORMAT_DOUBLE);
+    mpv_observe_property(mpv, 0, "volume", MPV_FORMAT_DOUBLE);
     mpv_set_wakeup_callback(mpv, on_mpv_events, this);
 
     connect(this, &QMpv::onUpdate, this, &QMpv::doUpdate,
@@ -261,6 +262,18 @@ qreal QMpv::playbackRate(){
     return m_playbackrate;
 }
 
+void QMpv::setvolume(qreal vol){
+    if (vol == volume()) {
+        return;
+    }
+    setProperty("volume", vol*100);
+    Q_EMIT volumeChanged();
+}
+
+qreal QMpv::volume(){
+    return m_volume;
+}
+
 QQuickFramebufferObject::Renderer *QMpv::createRenderer() const
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -310,10 +323,16 @@ void QMpv::onMpvEvents() {
                     Q_EMIT sourceChanged();
                 }
             }else if (strcmp(prop->name, "speed") == 0) {
-                // Handle speed property change
+
                 if (prop->format == MPV_FORMAT_DOUBLE) {
                     double rate = *(double *)prop->data;
                     m_playbackrate = rate;
+                }
+            }else if (strcmp(prop->name, "volume") == 0) {
+                if (prop->format == MPV_FORMAT_DOUBLE) {
+                    double volume = (*(double *)prop->data)/100;
+                    m_volume=volume;
+                    Q_EMIT volumeChanged();
                 }
             }
             break;
