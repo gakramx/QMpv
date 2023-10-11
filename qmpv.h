@@ -18,7 +18,7 @@ class MpvRenderer;
 class QMpv : public QQuickFramebufferObject
 {
     Q_OBJECT
-    Q_PROPERTY(qreal position READ position NOTIFY positionChanged)
+    Q_PROPERTY(qreal position READ position WRITE setPosition NOTIFY positionChanged)
     Q_PROPERTY(qreal duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(bool paused READ paused NOTIFY pausedChanged)
     Q_PROPERTY(bool stopped READ stopped NOTIFY stoppedChanged)
