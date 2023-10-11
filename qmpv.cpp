@@ -174,6 +174,9 @@ void QMpv::play()
         return;
     }
     setProperty("pause", false);
+    m_playbackState = PlayingState;
+
+    Q_EMIT playbackStateChanged();
     Q_EMIT pausedChanged();
 }
 
@@ -183,7 +186,9 @@ void QMpv::pause()
         return;
     }
     setProperty("pause", true);
+    m_playbackState = PausedState;
 
+    Q_EMIT playbackStateChanged();
     Q_EMIT pausedChanged();
 }
 
@@ -191,6 +196,9 @@ void QMpv::stop() {
     setPosition(0);
     setProperty("stop", true);
     m_stopped = true;
+    m_playbackState = StoppedState;
+
+    Q_EMIT playbackStateChanged();
     Q_EMIT stoppedChanged();
 }
 
@@ -243,6 +251,9 @@ QVariant QMpv::getProperty(const QString &name)
 void QMpv::setSource(const QString &file){
     // after laodfile it's directly play the media file !
     command(QStringList() << "loadfile" << file);
+    m_playbackState = PlayingState;
+
+    Q_EMIT playbackStateChanged();
     Q_EMIT sourceChanged();
 }
 
@@ -272,6 +283,10 @@ void QMpv::setvolume(qreal vol){
 
 qreal QMpv::volume(){
     return m_volume;
+}
+
+QMpv::PlaybackState QMpv::playbackState(){
+    return m_playbackState;
 }
 
 QQuickFramebufferObject::Renderer *QMpv::createRenderer() const
@@ -345,4 +360,3 @@ void QMpv::onMpvEvents() {
 
 
 bool QMpv::stopped() { return m_stopped; }
-
