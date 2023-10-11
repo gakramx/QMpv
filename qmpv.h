@@ -25,6 +25,14 @@ class QMpv : public QQuickFramebufferObject
     Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(qreal playbackRate READ playbackRate WRITE setplaybackRate NOTIFY playbackRateChanged)
     Q_PROPERTY(qreal volume READ volume WRITE setvolume NOTIFY volumeChanged)
+    Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
+
+    enum PlaybackState {
+        StoppedState,
+        PlayingState,
+        PausedState
+    };
+    Q_ENUM(QMpv::PlaybackState)
 
     mpv_handle *mpv;
     mpv_render_context *mpv_gl;
@@ -44,6 +52,8 @@ public:
     bool paused();
     bool stopped();
     qreal playbackRate();
+    qreal volume();
+    PlaybackState playbackState();
 
 public Q_SLOTS:
     void play();
@@ -68,6 +78,8 @@ Q_SIGNALS:
     void sourceChanged();
     void playbackRateChanged();
     void volumeChanged();
+    void playbackStateChanged();
+
 private Q_SLOTS:
     void onMpvEvents();
     void doUpdate();
@@ -80,5 +92,7 @@ private:
     QString m_source;
     qreal m_playbackrate = 1.0;
     qreal m_volume = 1.0;
+    PlaybackState m_playbackState;
+
 };
 #endif // QMPV_H
