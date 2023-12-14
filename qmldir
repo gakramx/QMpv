@@ -1,0 +1,4 @@
+module QMpv
+plugin qmpv
+classname QMpv
+
