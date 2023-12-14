@@ -20,7 +20,7 @@ class QMpv : public MpvAbstractItem
     Q_PROPERTY(bool stopped READ stopped NOTIFY stoppedChanged)
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(qreal playbackRate READ playbackRate WRITE setplaybackRate NOTIFY playbackRateChanged)
-    Q_PROPERTY(qreal volume READ volume WRITE setvolume NOTIFY volumeChanged)
+    Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
 
     enum PlaybackState {
@@ -54,13 +54,12 @@ public Q_SLOTS:
     void seek(qreal offset);
     void setSource(const QUrl &url);
     void setplaybackRate(qreal rate);
-    void setvolume(qreal vol);
+    void setVolume(qreal vol);
 
 Q_SIGNALS:
     void positionChanged();
     void durationChanged();
     void pausedChanged();
-    void onUpdate();
     void stoppedChanged();
     void sourceChanged();
     void playbackRateChanged();

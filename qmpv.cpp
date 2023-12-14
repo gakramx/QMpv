@@ -14,7 +14,6 @@
 #include <QDir>
 #include <QDebug>
 
-
 QMpv::QMpv(QQuickItem * parent)
     : MpvAbstractItem(parent)
 {
@@ -114,10 +113,11 @@ void QMpv::setSource(const QUrl &url) {
     // Use the QUrl directly when calling the command
     qDebug()<<m_source.toLocalFile();
     Q_EMIT command(QStringList() << QStringLiteral("loadfile") << m_source.toLocalFile());
+//    Q_EMIT command(QStringList() << QStringLiteral("loadfile") << "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
 
     // Update the playback state
-    //  m_playbackState = PlayingState;
-    // Q_EMIT playbackStateChanged();
+  //  m_playbackState = PlayingState;
+   // Q_EMIT playbackStateChanged();
 }
 
 
@@ -126,6 +126,7 @@ QUrl QMpv::source() const {
 }
 
 void QMpv::setplaybackRate(qreal rate){
+         qDebug()<<"C++ setplaybackRate : "<<rate;
     if (rate == playbackRate()) {
         return;
     }
@@ -137,8 +138,9 @@ qreal QMpv::playbackRate(){
     return m_playbackrate;
 }
 
-void QMpv::setvolume(qreal vol){
-    if (vol == volume()) {
+void QMpv::setVolume(qreal vol){
+     qDebug()<<"C++ setvolume : "<<vol;
+    if (vol == m_volume) {
         return;
     }
 
@@ -181,7 +183,9 @@ void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
         m_playbackrate = rate;
 
     }else if (property == QStringLiteral("volume")) {
-        double volume =  value.toDouble() /100;
+           qDebug()<<"C++ volume value : "<<value.toDouble() ;
+        qreal volume =  value.toDouble() / 100;
+        qDebug()<<"C++ volume : "<<volume;
         m_volume=volume;
         Q_EMIT volumeChanged();
     }
@@ -189,3 +193,4 @@ void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
 
 
 bool QMpv::stopped() { return m_stopped; }
+
