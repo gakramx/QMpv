@@ -161,16 +161,16 @@ QMpv::FillMode QMpv::fillMode(){
 void QMpv::setFillMode(FillMode mode) {
     switch (mode) {
     case Stretch:
-        setProperty(QStringLiteral("video-aspect"), -1);
-        m_fillMode = PreserveAspectFit ;
-        break;
-    case PreserveAspectFit:
-        setProperty(QStringLiteral("video-aspect"),1.3333);
-        m_fillMode =PreserveAspectCrop ;
+        setProperty(QStringLiteral("video-aspect"), 2.0);
+        m_fillMode = PreserveAspectCrop;
         break;
     case PreserveAspectCrop:
-        setProperty(QStringLiteral("video-aspect"),2.0);
-        m_fillMode =Stretch ;
+        setProperty(QStringLiteral("video-aspect"),1.3333);
+        m_fillMode =PreserveAspectFit;
+        break;
+    case PreserveAspectFit:
+        setProperty(QStringLiteral("video-aspect"),1.7777);
+        m_fillMode =Stretch;
         break;
     default:
         break;
