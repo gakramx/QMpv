@@ -27,7 +27,7 @@ QMpv::QMpv(QQuickItem * parent)
     observeProperty(QStringLiteral("path"), MPV_FORMAT_STRING);
     observeProperty(QStringLiteral("speed"), MPV_FORMAT_DOUBLE);
     observeProperty(QStringLiteral("volume"), MPV_FORMAT_DOUBLE);
-
+    observeProperty(QStringLiteral("video-aspect"), MPV_FORMAT_DOUBLE);
     connect(mpvController(), &MpvController::propertyChanged, this,
             &QMpv::onPropertyChanged, Qt::QueuedConnection);
 }
@@ -113,11 +113,11 @@ void QMpv::setSource(const QUrl &url) {
     // Use the QUrl directly when calling the command
     qDebug()<<m_source.toLocalFile();
     Q_EMIT command(QStringList() << QStringLiteral("loadfile") << m_source.toLocalFile());
-//    Q_EMIT command(QStringList() << QStringLiteral("loadfile") << "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
+    //    Q_EMIT command(QStringList() << QStringLiteral("loadfile") << "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
 
     // Update the playback state
-  //  m_playbackState = PlayingState;
-   // Q_EMIT playbackStateChanged();
+    //  m_playbackState = PlayingState;
+    // Q_EMIT playbackStateChanged();
 }
 
 
@@ -126,7 +126,7 @@ QUrl QMpv::source() const {
 }
 
 void QMpv::setplaybackRate(qreal rate){
-         qDebug()<<"C++ setplaybackRate : "<<rate;
+    qDebug()<<"C++ setplaybackRate : "<<rate;
     if (rate == playbackRate()) {
         return;
     }
@@ -139,7 +139,7 @@ qreal QMpv::playbackRate(){
 }
 
 void QMpv::setVolume(qreal vol){
-     qDebug()<<"C++ setvolume : "<<vol;
+    qDebug()<<"C++ setvolume : "<<vol;
     if (vol == m_volume) {
         return;
     }
@@ -155,7 +155,28 @@ qreal QMpv::volume(){
 QMpv::PlaybackState QMpv::playbackState(){
     return m_playbackState;
 }
-
+QMpv::FillMode QMpv::fillMode(){
+    return m_fillMode;
+}
+void QMpv::setFillMode(FillMode mode) {
+    switch (mode) {
+    case Stretch:
+        setProperty(QStringLiteral("video-aspect"), -1);
+        m_fillMode = PreserveAspectFit ;
+        break;
+    case PreserveAspectFit:
+        setProperty(QStringLiteral("video-aspect"),1.3333);
+        m_fillMode =PreserveAspectCrop ;
+        break;
+    case PreserveAspectCrop:
+        setProperty(QStringLiteral("video-aspect"),2.0);
+        m_fillMode =Stretch ;
+        break;
+    default:
+        break;
+    }
+    Q_EMIT fillModeChanged();
+}
 void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
 {
 
@@ -183,7 +204,7 @@ void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
         m_playbackrate = rate;
 
     }else if (property == QStringLiteral("volume")) {
-           qDebug()<<"C++ volume value : "<<value.toDouble() ;
+        qDebug()<<"C++ volume value : "<<value.toDouble();
         qreal volume =  value.toDouble() / 100;
         qDebug()<<"C++ volume : "<<volume;
         m_volume=volume;

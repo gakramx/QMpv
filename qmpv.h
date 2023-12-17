@@ -22,6 +22,7 @@ class QMpv : public MpvAbstractItem
     Q_PROPERTY(qreal playbackRate READ playbackRate WRITE setplaybackRate NOTIFY playbackRateChanged)
     Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
+    Q_PROPERTY(FillMode fillMode READ fillMode WRITE setFillMode NOTIFY fillModeChanged)
 
     enum PlaybackState {
         StoppedState,
@@ -29,7 +30,12 @@ class QMpv : public MpvAbstractItem
         PausedState
     };
     Q_ENUM(QMpv::PlaybackState)
-
+    enum FillMode {
+        Stretch,
+        PreserveAspectFit,
+        PreserveAspectCrop
+    };
+    Q_ENUM(QMpv::FillMode)
 
 
 public:
@@ -45,6 +51,7 @@ public:
     qreal playbackRate();
     qreal volume();
     PlaybackState playbackState();
+    FillMode fillMode();
 
 public Q_SLOTS:
     void play();
@@ -55,6 +62,7 @@ public Q_SLOTS:
     void setSource(const QUrl &url);
     void setplaybackRate(qreal rate);
     void setVolume(qreal vol);
+    void setFillMode(FillMode mode);
 
 Q_SIGNALS:
     void positionChanged();
@@ -65,7 +73,7 @@ Q_SIGNALS:
     void playbackRateChanged();
     void volumeChanged();
     void playbackStateChanged();
-
+    void fillModeChanged();
 
 private:
     void onPropertyChanged(const QString &property, const QVariant &value);
@@ -77,6 +85,7 @@ private:
     qreal m_playbackrate = 1.0;
     qreal m_volume = 1.0;
     PlaybackState m_playbackState;
+    FillMode m_fillMode=Stretch;
 
 };
 #endif // QMPV_H
