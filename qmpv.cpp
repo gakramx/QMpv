@@ -101,6 +101,8 @@ void QMpv::seek(qreal offset)
 
 
 void QMpv::setSource(const QUrl &url) {
+     setProperty(QStringLiteral("demuxer-lavf-o"),"decryption_key=b45b4a1c441d30ea134075e3cde260d3");
+
     // Convert the input QString to QUrl
     // QUrl url = QUrl::fromUserInput(url);
 
@@ -112,8 +114,8 @@ void QMpv::setSource(const QUrl &url) {
 
     // Use the QUrl directly when calling the command
     qDebug()<<m_source.toLocalFile();
-    Q_EMIT command(QStringList() << QStringLiteral("loadfile") << m_source.toLocalFile());
-    //    Q_EMIT command(QStringList() << QStringLiteral("loadfile") << "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4");
+    Q_EMIT command(QStringList() << QStringLiteral("loadfile") << m_source.toString());
+     //  Q_EMIT command(QStringList() << QStringLiteral("loadfile") << "https://dervox.com/dist/ev.mp4");
 
     // Update the playback state
     //  m_playbackState = PlayingState;
