@@ -52,7 +52,6 @@ public:
     qreal volume();
     PlaybackState playbackState();
     FillMode fillMode();
-
 public Q_SLOTS:
     void play();
     void pause();
@@ -86,6 +85,5 @@ private:
     qreal m_volume = 1.0;
     PlaybackState m_playbackState;
     FillMode m_fillMode=Stretch;
-
 };
 #endif // QMPV_H

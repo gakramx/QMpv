@@ -13,11 +13,25 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QDebug>
-
 QMpv::QMpv(QQuickItem * parent)
     : MpvAbstractItem(parent)
 {
+#ifdef Q_OS_ANDROID
+    setProperty(QStringLiteral("vo"), "opengl-cb");
+#endif
+
+
+    QString watchLaterLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
+                                 QDir::separator() + "watch-later";
+    QDir watchLaterDir(watchLaterLocation);
+    if (!watchLaterDir.exists())
+        watchLaterDir.mkpath(".");
+
+    qDebug()<<"Filessss :"<<watchLaterDir;
+    setProperty(QStringLiteral("watch-later-directory"), watchLaterLocation);
+
     setProperty(QStringLiteral("terminal"), QStringLiteral("yes"));
+    setProperty(QStringLiteral("save-position-on-quit"), QStringLiteral("yes"));
     setProperty(QStringLiteral("keep-open"), QStringLiteral("always"));
 
     observeProperty(QStringLiteral("duration"), MPV_FORMAT_DOUBLE);
@@ -101,7 +115,7 @@ void QMpv::seek(qreal offset)
 
 
 void QMpv::setSource(const QUrl &url) {
-     setProperty(QStringLiteral("demuxer-lavf-o"),"decryption_key=b45b4a1c441d30ea134075e3cde260d3");
+    setProperty(QStringLiteral("demuxer-lavf-o"),"decryption_key=b45b4a1c441d30ea134075e3cde260d3");
 
     // Convert the input QString to QUrl
     // QUrl url = QUrl::fromUserInput(url);
@@ -109,14 +123,15 @@ void QMpv::setSource(const QUrl &url) {
     // Check if the source has changed
     if (m_source != url) {
         m_source = url;
+
         Q_EMIT sourceChanged();
     }
 
     // Use the QUrl directly when calling the command
     qDebug()<<m_source.toLocalFile();
     Q_EMIT command(QStringList() << QStringLiteral("loadfile") << m_source.toString());
-     //  Q_EMIT command(QStringList() << QStringLiteral("loadfile") << "https://dervox.com/dist/ev.mp4");
-
+    qDebug()<<"PLAYIIIIIIIIIING" <<m_source;
+        //  Q_EMIT command(QStringList() << QStringLiteral("loadfile") << "https://dervox.com/dist/ev.mp4");
     // Update the playback state
     //  m_playbackState = PlayingState;
     // Q_EMIT playbackStateChanged();
@@ -213,7 +228,6 @@ void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
         Q_EMIT volumeChanged();
     }
 }
-
 
 bool QMpv::stopped() { return m_stopped; }
 
