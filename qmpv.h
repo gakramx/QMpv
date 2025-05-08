@@ -9,7 +9,7 @@
 
 #include <MpvAbstractItem>
 #include <QQuickFramebufferObject>
-
+#include <QTimer>
 
 class QMpv : public MpvAbstractItem
 {
@@ -52,6 +52,7 @@ public:
     qreal volume();
     PlaybackState playbackState();
     FillMode fillMode();
+        QQuickFramebufferObject::Renderer *createRenderer() const override;
 public Q_SLOTS:
     void play();
     void pause();
@@ -62,7 +63,7 @@ public Q_SLOTS:
     void setplaybackRate(qreal rate);
     void setVolume(qreal vol);
     void setFillMode(FillMode mode);
-
+    void resetRenderer();
 Q_SIGNALS:
     void positionChanged();
     void durationChanged();

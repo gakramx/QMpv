@@ -19,8 +19,10 @@ QMpv::QMpv(QQuickItem * parent)
 #ifdef Q_OS_ANDROID
     setProperty(QStringLiteral("vo"), "opengl-cb");
 #endif
-
-
+#ifdef Q_OS_LINUX
+    // Force embedded rendering on Linux
+  //  setProperty(QStringLiteral("vo"), QStringLiteral("opengl"));
+#endif
     QString watchLaterLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) +
                                  QDir::separator() + "watch-later";
     QDir watchLaterDir(watchLaterLocation);
@@ -44,6 +46,29 @@ QMpv::QMpv(QQuickItem * parent)
     observeProperty(QStringLiteral("video-aspect"), MPV_FORMAT_DOUBLE);
     connect(mpvController(), &MpvController::propertyChanged, this,
             &QMpv::onPropertyChanged, Qt::QueuedConnection);
+}
+void QMpv::resetRenderer() {
+    // Clear the current video
+    Q_EMIT command(QStringList() << QStringLiteral("stop"));
+
+    // Force libmpv as the video output to ensure embedded rendering
+    setProperty(QStringLiteral("vo"), QStringLiteral("libmpv"));
+
+    // Schedule a redraw to recreate the renderer
+    update();
+
+    // Let Qt know to invalidate the scene graph
+}
+QQuickFramebufferObject::Renderer *QMpv::createRenderer() const
+{
+    // This logs when the renderer is created
+    qDebug() << "Creating new MPV renderer";
+
+    // Force update to ensure a clean renderer state
+    const_cast<QMpv*>(this)->update();
+
+    // Call the parent implementation after our setup
+    return MpvAbstractItem::createRenderer();
 }
 
 QMpv::~QMpv()
@@ -115,27 +140,25 @@ void QMpv::seek(qreal offset)
 
 
 void QMpv::setSource(const QUrl &url) {
-    setProperty(QStringLiteral("demuxer-lavf-o"),"decryption_key=b45b4a1c441d30ea134075e3cde260d3");
-
-    // Convert the input QString to QUrl
-    // QUrl url = QUrl::fromUserInput(url);
-
-    // Check if the source has changed
+    // Store the new source URL
     if (m_source != url) {
         m_source = url;
-
         Q_EMIT sourceChanged();
     }
 
-    // Use the QUrl directly when calling the command
-    qDebug()<<m_source.toLocalFile();
-    Q_EMIT command(QStringList() << QStringLiteral("loadfile") << m_source.toString());
-    qDebug()<<"PLAYIIIIIIIIIING" <<m_source;
-        //  Q_EMIT command(QStringList() << QStringLiteral("loadfile") << "https://dervox.com/dist/ev.mp4");
-    // Update the playback state
-    //  m_playbackState = PlayingState;
-    // Q_EMIT playbackStateChanged();
+    // Reset the renderer state
+    resetRenderer();
+
+    // Set any needed decryption keys or options
+    setProperty(QStringLiteral("demuxer-lavf-o"), QStringLiteral("decryption_key=b45b4a1c441d30ea134075e3cde260d3"));
+
+    // Use a short delay to ensure the renderer has time to reset
+    QTimer::singleShot(100, this, [this, url]() {
+        qDebug() << "Loading video:" << url.toString();
+        Q_EMIT command(QStringList() << QStringLiteral("loadfile") << url.toString());
+    });
 }
+
 
 
 QUrl QMpv::source() const {
