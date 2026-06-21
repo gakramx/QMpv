@@ -30,15 +30,22 @@ QMpv::QMpv(QQuickItem * parent)
         watchLaterDir.mkpath(".");
 
     qDebug()<<"Filessss :"<<watchLaterDir;
-    setProperty(QStringLiteral("watch-later-directory"), watchLaterLocation);
+    //setProperty(QStringLiteral("watch-later-directory"), watchLaterLocation);
 
     setProperty(QStringLiteral("terminal"), QStringLiteral("yes"));
     setProperty(QStringLiteral("save-position-on-quit"), QStringLiteral("yes"));
     setProperty(QStringLiteral("keep-open"), QStringLiteral("always"));
+    setProperty(QStringLiteral("cache"), QStringLiteral("yes"));
+    setProperty(QStringLiteral("cache-secs"), 2); // pre-buffer 2s before playback
+    setProperty(QStringLiteral("demuxer-max-bytes"), 50000000);      // 50MB forward cache
+    setProperty(QStringLiteral("demuxer-max-back-bytes"), 5000000); // 5MB back-seek cache
+    setProperty(QStringLiteral("force-seekable"), QStringLiteral("yes"));
 
     observeProperty(QStringLiteral("duration"), MPV_FORMAT_DOUBLE);
     observeProperty(QStringLiteral("time-pos"), MPV_FORMAT_DOUBLE);
     observeProperty(QStringLiteral("pause"), MPV_FORMAT_FLAG);
+    observeProperty(QStringLiteral("paused-for-cache"), MPV_FORMAT_FLAG);
+    observeProperty(QStringLiteral("core-idle"), MPV_FORMAT_FLAG);
 
     observeProperty(QStringLiteral("path"), MPV_FORMAT_STRING);
     observeProperty(QStringLiteral("speed"), MPV_FORMAT_DOUBLE);
@@ -88,6 +95,11 @@ qreal QMpv::duration()
 bool QMpv::paused()
 {
     return m_paused;
+}
+
+bool QMpv::buffering()
+{
+    return m_buffering;
 }
 
 void QMpv::play()
@@ -149,8 +161,14 @@ void QMpv::setSource(const QUrl &url) {
     // Reset the renderer state
     resetRenderer();
 
-    // Set any needed decryption keys or options
-    setProperty(QStringLiteral("demuxer-lavf-o"), QStringLiteral("decryption_key=b45b4a1c441d30ea134075e3cde260d3"));
+    // apply decryption key always - the server streams encrypted files,
+    // external CDN plain .mp4 URLs that don't need it are harmlessly rejected by lavf.
+    // We force the 'mov' demuxer and Use massive probesize/analyzeduration for fragmented CENC compatibility.
+    // We also provide the decryption_key_id which is essential for matching keys to fragments in a fragmented stream.
+    setProperty(QStringLiteral("demuxer-lavf-format"), QStringLiteral("mov"));
+    setProperty(QStringLiteral("demuxer-lavf-o"), QStringLiteral("decryption_key=b45b4a1c441d30ea134075e3cde260d3,decryption_key_id=e40c050015175ead3b2de4dd94bd1360,probesize=50000000,analyzeduration=50000000"));
+    setProperty(QStringLiteral("demuxer-max-bytes"), QStringLiteral("2048MiB"));
+    setProperty(QStringLiteral("demuxer-readahead-secs"), 30);
 
     // Use a short delay to ensure the renderer has time to reset
     QTimer::singleShot(100, this, [this, url]() {
@@ -235,6 +253,12 @@ void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
     } else if (property == QStringLiteral("pause")) {
         m_paused = value.toBool();
         Q_EMIT pausedChanged();
+    } else if (property == QStringLiteral("paused-for-cache") || property == QStringLiteral("core-idle")) {
+        bool idle = value.toBool();
+        if (m_buffering != idle) {
+            m_buffering = idle;
+            Q_EMIT bufferingChanged();
+        }
     }
     else if (property == QStringLiteral("path")) {
         m_source = value.toString();

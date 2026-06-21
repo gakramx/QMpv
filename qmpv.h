@@ -7,7 +7,7 @@
 #ifndef QMPV_H
 #define QMPV_H
 
-#include <MpvAbstractItem>
+#include "mpvabstractitem.h"
 #include <QQuickFramebufferObject>
 #include <QTimer>
 
@@ -18,6 +18,7 @@ class QMpv : public MpvAbstractItem
     Q_PROPERTY(qreal duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(bool paused READ paused NOTIFY pausedChanged)
     Q_PROPERTY(bool stopped READ stopped NOTIFY stoppedChanged)
+    Q_PROPERTY(bool buffering READ buffering NOTIFY bufferingChanged)
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(qreal playbackRate READ playbackRate WRITE setplaybackRate NOTIFY playbackRateChanged)
     Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
@@ -48,6 +49,7 @@ public:
     QUrl source() const;
     bool paused();
     bool stopped();
+    bool buffering();
     qreal playbackRate();
     qreal volume();
     PlaybackState playbackState();
@@ -69,6 +71,7 @@ Q_SIGNALS:
     void durationChanged();
     void pausedChanged();
     void stoppedChanged();
+    void bufferingChanged();
     void sourceChanged();
     void playbackRateChanged();
     void volumeChanged();
@@ -81,6 +84,7 @@ private:
     qreal m_position = 0;
     qreal m_duration = 0;
     bool m_stopped = true;
+    bool m_buffering = false;
     QUrl m_source;
     qreal m_playbackrate = 1.0;
     qreal m_volume = 1.0;
