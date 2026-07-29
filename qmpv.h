@@ -24,6 +24,8 @@ class QMpv : public MpvAbstractItem
     Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(PlaybackState playbackState READ playbackState NOTIFY playbackStateChanged)
     Q_PROPERTY(FillMode fillMode READ fillMode WRITE setFillMode NOTIFY fillModeChanged)
+    Q_PROPERTY(int libraryId READ libraryId WRITE setLibraryId NOTIFY libraryIdChanged)
+    Q_PROPERTY(QString masterKey READ masterKey WRITE setMasterKey NOTIFY masterKeyChanged)
 
     enum PlaybackState {
         StoppedState,
@@ -54,6 +56,8 @@ public:
     qreal volume();
     PlaybackState playbackState();
     FillMode fillMode();
+    int libraryId() const;
+    QString masterKey() const;
         QQuickFramebufferObject::Renderer *createRenderer() const override;
 public Q_SLOTS:
     void play();
@@ -66,6 +70,8 @@ public Q_SLOTS:
     void setVolume(qreal vol);
     void setFillMode(FillMode mode);
     void resetRenderer();
+    void setLibraryId(int id);
+    void setMasterKey(const QString &key);
 Q_SIGNALS:
     void positionChanged();
     void durationChanged();
@@ -77,6 +83,8 @@ Q_SIGNALS:
     void volumeChanged();
     void playbackStateChanged();
     void fillModeChanged();
+    void libraryIdChanged();
+    void masterKeyChanged();
 
 private:
     void onPropertyChanged(const QString &property, const QVariant &value);
@@ -90,5 +98,7 @@ private:
     qreal m_volume = 1.0;
     PlaybackState m_playbackState;
     FillMode m_fillMode=Stretch;
+    int m_libraryId = 0;
+    QString m_masterKey = "";
 };
 #endif // QMPV_H

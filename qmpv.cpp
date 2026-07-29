@@ -9,10 +9,10 @@
 #include <MpvController>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
-#include <QQuickWindow>
 #include <QStandardPaths>
 #include <QDir>
 #include <QDebug>
+#include "KeyHelper.h"
 QMpv::QMpv(QQuickItem * parent)
     : MpvAbstractItem(parent)
 {
@@ -164,9 +164,22 @@ void QMpv::setSource(const QUrl &url) {
     // apply decryption key always - the server streams encrypted files,
     // external CDN plain .mp4 URLs that don't need it are harmlessly rejected by lavf.
     // We force the 'mov' demuxer and Use massive probesize/analyzeduration for fragmented CENC compatibility.
-    // We also provide the decryption_key_id which is essential for matching keys to fragments in a fragmented stream.
     setProperty(QStringLiteral("demuxer-lavf-format"), QStringLiteral("mov"));
-    setProperty(QStringLiteral("demuxer-lavf-o"), QStringLiteral("decryption_key=b45b4a1c441d30ea134075e3cde260d3,decryption_key_id=e40c050015175ead3b2de4dd94bd1360,probesize=50000000,analyzeduration=50000000"));
+    
+    QString kid, cencKey;
+    if (!m_masterKey.isEmpty() && m_libraryId > 0) {
+        kid = KeyHelper::deriveKid(m_masterKey, m_libraryId).toLower();
+        cencKey = KeyHelper::deriveCencKey(m_masterKey, m_libraryId).toLower();
+        qDebug() << "QMpv: Using dynamic CENC key for library" << m_libraryId;
+    } else {
+        qDebug() << "QMpv: WARNING: No master key assigned, using static fallback key!";
+        kid = QStringLiteral("e40c050015175ead3b2de4dd94bd1360");
+        cencKey = QStringLiteral("b45b4a1c441d30ea134075e3cde260d3");
+    }
+    
+    QString demuxerParams = QString("decryption_key=%1,decryption_key_id=%2,probesize=50000000,analyzeduration=50000000").arg(cencKey, kid);
+    setProperty(QStringLiteral("demuxer-lavf-o"), demuxerParams);
+    
     setProperty(QStringLiteral("demuxer-max-bytes"), QStringLiteral("2048MiB"));
     setProperty(QStringLiteral("demuxer-readahead-secs"), 30);
 
@@ -278,3 +291,24 @@ void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
 
 bool QMpv::stopped() { return m_stopped; }
 
+int QMpv::libraryId() const {
+    return m_libraryId;
+}
+
+void QMpv::setLibraryId(int id) {
+    if (m_libraryId != id) {
+        m_libraryId = id;
+        Q_EMIT libraryIdChanged();
+    }
+}
+
+QString QMpv::masterKey() const {
+    return m_masterKey;
+}
+
+void QMpv::setMasterKey(const QString &key) {
+    if (m_masterKey != key) {
+        m_masterKey = key;
+        Q_EMIT masterKeyChanged();
+    }
+}
