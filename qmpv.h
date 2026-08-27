@@ -93,6 +93,9 @@ private:
     qreal m_duration = 0;
     bool m_stopped = true;
     bool m_buffering = false;
+    bool m_paused_for_cache = false;  // network buffer ran dry
+    bool m_core_idle = false;         // mpv core not actively decoding
+    void updateBuffering();
     QUrl m_source;
     qreal m_playbackrate = 1.0;
     qreal m_volume = 1.0;

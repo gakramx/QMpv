@@ -152,9 +152,19 @@ void QMpv::seek(qreal offset)
 
 
 void QMpv::setSource(const QUrl &url) {
+    // Normalize: if the caller passed a plain file path (no scheme), convert it
+    // to a proper local file URL so url.isLocalFile() works correctly later.
+    QUrl normalizedUrl = url;
+    if (url.scheme().isEmpty() && !url.path().isEmpty()) {
+        normalizedUrl = QUrl::fromLocalFile(url.path());
+    } else if (!url.isValid() || (url.scheme() != "file" && !url.scheme().startsWith("http"))) {
+        // Treat any unrecognized string as a local path
+        normalizedUrl = QUrl::fromLocalFile(url.toString());
+    }
+
     // Store the new source URL
-    if (m_source != url) {
-        m_source = url;
+    if (m_source != normalizedUrl) {
+        m_source = normalizedUrl;
         Q_EMIT sourceChanged();
     }
 
@@ -177,16 +187,26 @@ void QMpv::setSource(const QUrl &url) {
         cencKey = QStringLiteral("b45b4a1c441d30ea134075e3cde260d3");
     }
     
-    QString demuxerParams = QString("decryption_key=%1,decryption_key_id=%2,probesize=50000000,analyzeduration=50000000").arg(cencKey, kid);
+    QString demuxerParams = QString("decryption_key=%1,decryption_key_id=%2,probesize=50000000,analyzeduration=5000000").arg(cencKey, kid);
     setProperty(QStringLiteral("demuxer-lavf-o"), demuxerParams);
     
     setProperty(QStringLiteral("demuxer-max-bytes"), QStringLiteral("2048MiB"));
     setProperty(QStringLiteral("demuxer-readahead-secs"), 30);
 
     // Use a short delay to ensure the renderer has time to reset
-    QTimer::singleShot(100, this, [this, url]() {
-        qDebug() << "Loading video:" << url.toString();
-        Q_EMIT command(QStringList() << QStringLiteral("loadfile") << url.toString());
+    QTimer::singleShot(100, this, [this, normalizedUrl]() {
+        // mpv requires a valid URI. For local files, use the percent-encoded file:// URL.
+        // For remote streams (http/https) pass the URL string directly.
+        QString uriToLoad;
+        if (normalizedUrl.isLocalFile()) {
+            // QUrl::toEncoded() produces a properly percent-encoded file:/// URI
+            // e.g. "file:///storage/emulated/0/My%20Documents/TestLib/DIM3.mp4"
+            uriToLoad = QString::fromUtf8(normalizedUrl.toEncoded());
+        } else {
+            uriToLoad = normalizedUrl.toString();
+        }
+        qDebug() << "Loading video:" << uriToLoad;
+        Q_EMIT command(QStringList() << QStringLiteral("loadfile") << uriToLoad);
     });
 }
 
@@ -248,6 +268,15 @@ void QMpv::setFillMode(FillMode mode) {
     }
     Q_EMIT fillModeChanged();
 }
+void QMpv::updateBuffering()
+{
+    // Buffering = network ran dry OR mpv core idle without the user having paused
+    bool shouldBuffer = m_paused_for_cache || (m_core_idle && !m_paused);
+    if (m_buffering != shouldBuffer) {
+        m_buffering = shouldBuffer;
+        Q_EMIT bufferingChanged();
+    }
+}
 void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
 {
 
@@ -265,13 +294,16 @@ void QMpv::onPropertyChanged(const QString &property, const QVariant &value)
         Q_EMIT durationChanged();
     } else if (property == QStringLiteral("pause")) {
         m_paused = value.toBool();
+        m_playbackState = m_paused ? PausedState : PlayingState;
         Q_EMIT pausedChanged();
-    } else if (property == QStringLiteral("paused-for-cache") || property == QStringLiteral("core-idle")) {
-        bool idle = value.toBool();
-        if (m_buffering != idle) {
-            m_buffering = idle;
-            Q_EMIT bufferingChanged();
-        }
+        Q_EMIT playbackStateChanged();
+        updateBuffering(); // re-evaluate: user-pause should clear the spinner
+    } else if (property == QStringLiteral("paused-for-cache")) {
+        m_paused_for_cache = value.toBool();
+        updateBuffering();
+    } else if (property == QStringLiteral("core-idle")) {
+        m_core_idle = value.toBool();
+        updateBuffering();
     }
     else if (property == QStringLiteral("path")) {
         m_source = value.toString();
